@@ -1,4 +1,5 @@
 ﻿using ECommerce.API.DTOs;
+using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -8,10 +9,11 @@ using Microsoft.AspNetCore.Mvc;
 public class ProductController : ControllerBase
 {
     private readonly IProductService _service;
-
-    public ProductController(IProductService service)
+    private readonly IMediator _mediator;
+    public ProductController(IProductService service, IMediator mediator)
     {
         _service = service;
+        _mediator = mediator;
     }
 
     [Authorize]
@@ -26,8 +28,8 @@ public class ProductController : ControllerBase
 
     [HttpGet]
 
-    public async Task<IActionResult>Get([FromQuery]ProductQueryDto dto)
+    public async Task<IActionResult> Get([FromQuery] ProductQueryDto dto)
     {
-        return Ok( await _service.Get(dto));
+        return Ok(await _mediator.Send(new GetProductsQuery(dto)));
     }
 }
