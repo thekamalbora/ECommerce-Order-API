@@ -3,6 +3,7 @@ using ECommerce.API.DTOs;
 using ECommerce.API.Entities;
 using ECommerce.API.Repositories;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 
 public class ProductRepository : IProductRepository
 {
@@ -115,5 +116,10 @@ public class ProductRepository : IProductRepository
     public async Task Save()
     {
         await _db.SaveChangesAsync();
+    }
+
+    public async Task<IDbContextTransaction> BeginTransaction()
+    {
+        return await _db.Database.BeginTransactionAsync();
     }
 }

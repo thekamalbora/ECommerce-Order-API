@@ -1,5 +1,6 @@
 ﻿using ECommerce.API.DTOs;
 using ECommerce.API.Entities;
+using Microsoft.EntityFrameworkCore.Storage;
 
 namespace ECommerce.API.Repositories
 {
@@ -10,5 +11,6 @@ namespace ECommerce.API.Repositories
         Task<PagedResponseDto<ProductResponseDto>> Get(ProductQueryDto dto);
 
         Task Save();
+        Task<IDbContextTransaction> BeginTransaction();
     }
 }

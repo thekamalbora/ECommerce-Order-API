@@ -1,4 +1,6 @@
-﻿namespace ECommerce.API.Entities
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace ECommerce.API.Entities
 {
     public class Product
     {
@@ -13,5 +15,8 @@
         public int Stock { get; set; }
 
         public DateTime CreatedDate { get; set; }
+        [Timestamp]
+
+        public byte[] RowVersion { get; set; }
     }
 }

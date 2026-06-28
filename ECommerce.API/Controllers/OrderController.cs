@@ -1,12 +1,28 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using ECommerce.API.Services;
+using Microsoft.AspNetCore.Mvc;
+[Route("api/orders")]
+[ApiController]
 
-namespace ECommerce.API.Controllers
+public class OrderController : Controller
 {
-    public class OrderController : Controller
+    private readonly IOrderService _service;
+
+    public OrderController(IOrderService service)
     {
-        public IActionResult Index()
+        _service = service;
+    }
+
+    [HttpPost]
+
+    public async Task<IActionResult> Create(CreateOrderDto dto)
+    {
+        await _service.PlaceOrder(dto);
+
+        return Ok(
+        new
         {
-            return View();
-        }
+            message = "Order Created"
+        });
     }
 }
+

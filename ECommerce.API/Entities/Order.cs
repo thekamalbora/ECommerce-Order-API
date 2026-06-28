@@ -10,6 +10,6 @@
 
         public DateTime CreatedDate { get; set; }
 
-        public ICollection<OrderItem> OrderItems{ get; set; }
+        public ICollection<OrderItem> OrderItems{ get; set; } =new List<OrderItem>();
     }
 }
