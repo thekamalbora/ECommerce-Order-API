@@ -1,4 +1,5 @@
 using System.Text;
+using System.Threading.RateLimiting;
 using ECommerce.API.Data;
 using ECommerce.API.Helpers;
 using ECommerce.API.Messaging;
@@ -6,13 +7,14 @@ using ECommerce.API.Repositories;
 using ECommerce.API.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.IdentityModel.Tokens;
+using OpenTelemetry.Trace;
 using RabbitMQ.Client;
 using Serilog;
 using StackExchange.Redis;
-using OpenTelemetry.Trace;
 
 // Configure the global static Serilog logger instance
 Log.Logger = new LoggerConfiguration()
@@ -51,6 +53,7 @@ builder.Services.AddOpenTelemetry()
 builder.Services.AddControllers();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
+
 
 
 builder.Services.AddDbContext<ApplicationDbContext>(x => x.UseSqlServer(builder.Configuration.GetConnectionString("Default")));
@@ -134,6 +137,45 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
     };
 });
+// Register the rate limiting service with a global partitioned policy
+builder.Services.AddRateLimiter(options =>
+{
+    // Apply a global rate limit across the entire application based on individual client partitions
+    options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(context =>
+
+        // Use a Fixed Window algorithm to isolate rate limits per user/IP address
+        RateLimitPartition.GetFixedWindowLimiter(
+            // Identify each client uniquely (Use Username if logged in -> Fallback to Client IP -> Fallback to "anonymous")
+            partitionKey: context.User.Identity?.Name
+                          ?? context.Connection.RemoteIpAddress?.ToString()
+                          ?? "anonymous",
+
+            // Configure the rules applied individually to each partition key
+            factory: _ => new FixedWindowRateLimiterOptions
+            {
+                // Each unique client is allowed up to 5 requests per window
+                PermitLimit = 5,
+
+                // The request quota resets automatically every 30 seconds
+                Window = TimeSpan.FromSeconds(30),
+
+                // Over-limit requests are immediately dropped rather than waiting in a buffer queue
+                QueueLimit = 0
+            }));
+
+    // Fix: Handle the rejection using the proper 'OnRejected' callback lifecycle event
+    options.OnRejected = async (context, cancellationToken) =>
+    {
+        // Explicitly set the HTTP status code to 429 (Too Many Requests)
+        context.HttpContext.Response.StatusCode = StatusCodes.Status429TooManyRequests;
+
+        // Return your clean, custom structured JSON response payload to the client
+        await context.HttpContext.Response.WriteAsJsonAsync(new
+        {
+            message = "Too many requests. Please try again later."
+        }, cancellationToken);
+    };
+});
 
 builder.Services.AddAuthorization();
 var app = builder.Build();
@@ -146,6 +188,7 @@ if (app.Environment.IsDevelopment())
 app.UseSerilogRequestLogging();
 app.UseHttpsRedirection();
 app.UseMiddleware<CorrelationIdMiddleware>();
+app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
 
@@ -169,5 +212,5 @@ app.MapHealthChecks("/health", new HealthCheckOptions
             })
         });
     }
-});
+}).DisableRateLimiting();
 app.Run();

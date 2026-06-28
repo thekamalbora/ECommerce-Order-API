@@ -2,9 +2,11 @@
 using ECommerce.API.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace ECommerce.API.Controllers
 {
+    [DisableRateLimiting]
     [Route("api/auth")]
     [ApiController]
 
