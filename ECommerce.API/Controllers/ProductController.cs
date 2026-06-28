@@ -21,9 +21,12 @@ public class ProductController : ControllerBase
 
     public async Task<IActionResult> Create(CreateProductDto dto)
     {
-        await _service.Create(dto);
+        await _mediator.Send(new CreateProductCommand(dto));
 
-        return Ok("Created");
+        return Ok(new
+        {
+            message = "Product Created"
+        });
     }
 
     [HttpGet]

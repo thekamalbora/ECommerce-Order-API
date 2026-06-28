@@ -13,6 +13,8 @@ namespace ECommerce.API.Data
         }
 
         public DbSet<User> Users => Set<User>();
-        public DbSet<Product>Products =>Set<Product>();
+        public DbSet<Product> Products => Set<Product>();
+        public DbSet<Order> Orders { get; set; }
+        public DbSet<OrderItem> OrderItems { get; set; }
     }
 }
