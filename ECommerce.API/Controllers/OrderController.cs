@@ -6,18 +6,19 @@ using Microsoft.AspNetCore.Mvc;
 public class OrderController : Controller
 {
     private readonly IOrderService _service;
-
-    public OrderController(IOrderService service)
+    private readonly ILogger<OrderController> _logger;
+    public OrderController(IOrderService service, ILogger<OrderController> logger)
     {
         _service = service;
+        _logger = logger;
     }
 
     [HttpPost]
 
     public async Task<IActionResult> Create(CreateOrderDto dto)
     {
+        _logger.LogInformation("Order API called for User {UserId}", dto.UserId);
         await _service.PlaceOrder(dto);
-
         return Ok(
         new
         {
