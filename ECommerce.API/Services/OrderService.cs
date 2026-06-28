@@ -1,12 +1,12 @@
 ﻿using ECommerce.API.Data;
 using ECommerce.API.Entities;
+using ECommerce.API.Messaging;
 using ECommerce.API.Services;
 using Microsoft.EntityFrameworkCore;
 
 public class OrderService : IOrderService
 {
     private readonly ApplicationDbContext _db;
-
     public OrderService(ApplicationDbContext db)
     {
         _db = db;
@@ -63,8 +63,17 @@ public class OrderService : IOrderService
             _db.Orders.Add(order);
 
             await _db.SaveChangesAsync();
-
+            _db.OutboxMessages.Add(new OutboxMessage
+            {
+                EventType = "OrderCreated",
+                Payload = $"{order.Id}",
+                CreatedDate = DateTime.UtcNow,
+                Processed = false
+            });
+            await _db.SaveChangesAsync();
             await tx.CommitAsync();
+
+            //await _pub.Publish($"Order Created:{order.Id}");
         }
         catch (DbUpdateConcurrencyException)
         {

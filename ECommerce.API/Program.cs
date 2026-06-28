@@ -1,13 +1,14 @@
 using System.Text;
 using ECommerce.API.Data;
 using ECommerce.API.Helpers;
+using ECommerce.API.Messaging;
 using ECommerce.API.Repositories;
 using ECommerce.API.Services;
+using MediatR;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using StackExchange.Redis;
-using MediatR;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -25,16 +26,21 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IProductRepository, ProductRepository>();
 builder.Services.AddScoped<IProductService, ProductService>();
-builder.Services.AddScoped<IOrderService,OrderService>();
+builder.Services.AddScoped<IOrderService, OrderService>();
+
+builder.Services.AddSingleton<IRabbitMqPublisher, RabbitMqPublisher>();
+builder.Services.AddHostedService<OrderConsumer>();
+builder.Services.AddHostedService<OutboxWorker>();
+builder.Services.AddHostedService<DeadLetterRecoveryWorker>();
 builder.Services.AddStackExchangeRedisCache(options =>
 {
     options.Configuration = builder.Configuration.GetConnectionString("Redis");
     options.InstanceName = "ECommerce:";
 });
 builder.Services.AddSingleton<IConnectionMultiplexer>(ConnectionMultiplexer.Connect("localhost:6379"));
-builder.Services.AddScoped<ICacheService,CacheService>();
+builder.Services.AddScoped<ICacheService, CacheService>();
 
-builder.Services.AddMediatR(cfg =>cfg.RegisterServicesFromAssembly(typeof(Program).Assembly));
+builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(Program).Assembly));
 
 builder.Services.AddScoped<JwtTokenGenerator>();
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)

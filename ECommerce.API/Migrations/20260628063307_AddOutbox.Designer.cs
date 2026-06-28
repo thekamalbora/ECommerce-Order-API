@@ -4,6 +4,7 @@ using ECommerce.API.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace ECommerce.API.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260628063307_AddOutbox")]
+    partial class AddOutbox
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -82,9 +85,6 @@ namespace ECommerce.API.Migrations
                     b.Property<DateTime>("CreatedDate")
                         .HasColumnType("datetime2");
 
-                    b.Property<bool>("DeadLetter")
-                        .HasColumnType("bit");
-
                     b.Property<string>("EventType")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -95,9 +95,6 @@ namespace ECommerce.API.Migrations
 
                     b.Property<bool>("Processed")
                         .HasColumnType("bit");
-
-                    b.Property<int>("RetryCount")
-                        .HasColumnType("int");
 
                     b.HasKey("Id");
 
