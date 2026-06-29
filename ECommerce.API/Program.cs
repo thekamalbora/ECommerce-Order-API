@@ -6,9 +6,12 @@ using ECommerce.API.Helpers;
 using ECommerce.API.Messaging;
 using ECommerce.API.Repositories;
 using ECommerce.API.Services;
+using FluentValidation;
+using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
@@ -53,6 +56,25 @@ builder.Services.AddOpenTelemetry()
             .AddConsoleExporter();
     });
 builder.Services.AddControllers();
+
+
+builder.Services.AddFluentValidationAutoValidation();
+builder.Services.AddValidatorsFromAssemblyContaining<Program>();
+builder.Services.Configure<ApiBehaviorOptions>(x =>
+{
+    x.InvalidModelStateResponseFactory = ctx =>
+    {
+        var errors = ctx.ModelState.Values
+            .SelectMany(v => v.Errors)
+            .Select(e => e.ErrorMessage);
+
+        return new BadRequestObjectResult(new
+        {
+            Success = false,
+            Errors = errors
+        });
+    };
+});
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 //builder.Services.AddOpenApi();
 
