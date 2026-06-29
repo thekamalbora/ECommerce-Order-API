@@ -284,7 +284,7 @@ if (app.Environment.IsDevelopment())
 app.UseSerilogRequestLogging();
 app.UseHttpsRedirection();
 app.UseMiddleware<CorrelationIdMiddleware>();
-
+app.UseMiddleware<ETagMiddleware>();
 app.UseAuthentication();
 app.UseAuthorization();
 
