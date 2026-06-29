@@ -1,21 +1,23 @@
-using System.Text;
+﻿using System.Text;
 using System.Threading.RateLimiting;
+using Asp.Versioning;
 using ECommerce.API.Data;
 using ECommerce.API.Helpers;
 using ECommerce.API.Messaging;
 using ECommerce.API.Repositories;
 using ECommerce.API.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
 using OpenTelemetry.Trace;
 using RabbitMQ.Client;
 using Serilog;
 using StackExchange.Redis;
-using Asp.Versioning;
 
 // Configure the global static Serilog logger instance
 Log.Logger = new LoggerConfiguration()
@@ -34,7 +36,6 @@ Log.Logger = new LoggerConfiguration()
     .CreateLogger();
 
 var builder = WebApplication.CreateBuilder(args);
-
 builder.Host.UseSerilog();
 builder.Services.AddHttpContextAccessor();
 // Add services to the container.
@@ -53,7 +54,7 @@ builder.Services.AddOpenTelemetry()
     });
 builder.Services.AddControllers();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-builder.Services.AddOpenApi();
+//builder.Services.AddOpenApi();
 
 
 
@@ -178,20 +179,46 @@ builder.Services.AddRateLimiter(options =>
     };
 });
 
-// Register API Versioning services in the Dependency Injection container
+
+// Register API Versioning services inside the Dependency Injection container
 builder.Services.AddApiVersioning(options =>
 {
     // Set the default API version to 1.0
     options.DefaultApiVersion = new ApiVersion(1, 0);
 
-    // Automatically route to the default version (1.0) if the client omits the version in their request
+    // Automatically route requests to the default version (1.0) if no version is specified by the client
     options.AssumeDefaultVersionWhenUnspecified = true;
 
-    // Append version metadata to outbound HTTP response headers (e.g., api-supported-versions)
+    // Append version capability metadata (e.g., api-supported-versions) to outbound HTTP response headers
     options.ReportApiVersions = true;
 })
-// Enable integration with MVC controllers and endpoints
-.AddMvc();
+// Enable the API Explorer extension, which maps discovered endpoints for documentation tools
+.AddApiExplorer(options =>
+{
+    // Set the naming pattern for documentation groups (e.g., 'v1', 'v2') using major, minor, and patch values
+    options.GroupNameFormat = "'v'VVV";
+
+    // Automatically replace the '{version}' token inside route templates with the corresponding actual version number
+    options.SubstituteApiVersionInUrl = true;
+});
+builder.Services.AddEndpointsApiExplorer();
+// Configure the Swagger generator to build OpenAPI documentation files
+builder.Services.AddSwaggerGen(options =>
+{
+    // Define the specification document for Version 1 of your API
+    options.SwaggerDoc("v1", new OpenApiInfo
+    {
+        Title = "ECommerce API",
+        Version = "v1"
+    });
+
+    // Define the specification document for Version 2 of your API
+    options.SwaggerDoc("v2", new OpenApiInfo
+    {
+        Title = "ECommerce API",
+        Version = "v2"
+    });
+});
 
 builder.Services.AddAuthorization();
 var app = builder.Build();
@@ -199,8 +226,19 @@ var app = builder.Build();
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
-    app.MapOpenApi();
+    //app.MapOpenApi();
+    app.UseSwagger();
+    // Configure the HTTP request pipeline to use the interactive Swagger UI web dashboard
+    app.UseSwaggerUI(options =>
+    {
+        // Map the relative URL path of the Version 1 JSON specification file to a dropdown option named "API V1"
+        options.SwaggerEndpoint("/swagger/v1/swagger.json", "API V1");
+
+        // Map the relative URL path of the Version 2 JSON specification file to a dropdown option named "API V2"
+        options.SwaggerEndpoint("/swagger/v2/swagger.json", "API V2");
+    });
 }
+
 app.UseSerilogRequestLogging();
 app.UseHttpsRedirection();
 app.UseMiddleware<CorrelationIdMiddleware>();
