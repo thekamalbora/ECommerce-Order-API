@@ -222,7 +222,7 @@ builder.Services.AddSwaggerGen(options =>
 
 builder.Services.AddAuthorization();
 var app = builder.Build();
-
+app.UseMiddleware<ExceptionMiddleware>();
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
