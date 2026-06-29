@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using System.IO.Compression;
+using System.Text;
 using System.Threading.RateLimiting;
 using Asp.Versioning;
 using ECommerce.API.Data;
@@ -13,6 +14,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.IdentityModel.Tokens;
@@ -74,6 +76,21 @@ builder.Services.Configure<ApiBehaviorOptions>(x =>
             Errors = errors
         });
     };
+});
+builder.Services.AddResponseCompression(options =>
+{
+    options.EnableForHttps = true;
+
+    options.Providers.Add<GzipCompressionProvider>();
+
+    options.MimeTypes = ResponseCompressionDefaults.MimeTypes.Concat(
+    [
+        "application/json"
+    ]);
+});
+builder.Services.Configure<GzipCompressionProviderOptions>(x =>
+{
+    x.Level = CompressionLevel.Fastest;
 });
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 //builder.Services.AddOpenApi();
@@ -244,7 +261,10 @@ builder.Services.AddSwaggerGen(options =>
 
 builder.Services.AddAuthorization();
 var app = builder.Build();
+
 app.UseMiddleware<ExceptionMiddleware>();
+app.UseResponseCompression();
+app.UseRateLimiter();
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
@@ -264,7 +284,7 @@ if (app.Environment.IsDevelopment())
 app.UseSerilogRequestLogging();
 app.UseHttpsRedirection();
 app.UseMiddleware<CorrelationIdMiddleware>();
-app.UseRateLimiter();
+
 app.UseAuthentication();
 app.UseAuthorization();
 
