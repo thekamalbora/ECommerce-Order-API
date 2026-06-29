@@ -33,11 +33,6 @@ public static class DependencyInjectionExtensions
         // Register RabbitMQ Event Publisher (Singleton lifetime)
         services.AddSingleton<IRabbitMqPublisher, RabbitMqPublisher>();
 
-        // Register Background Hosted Services / Workers
-        services.AddHostedService<OrderConsumer>();
-        services.AddHostedService<OutboxWorker>();
-        services.AddHostedService<DeadLetterRecoveryWorker>();
-
         // Configure Distributed Caching via Redis
         services.AddStackExchangeRedisCache(options =>
         {
