@@ -1,10 +1,13 @@
-﻿using ECommerce.API.DTOs;
+﻿using Asp.Versioning;
+using ECommerce.API.DTOs;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-[Route("api/products")]
 [ApiController]
+[ApiVersion("1.0")]
+[ApiVersion("2.0")]
+[Route("api/v{version:apiVersion}/products")]
 
 public class ProductController : ControllerBase
 {
@@ -30,9 +33,19 @@ public class ProductController : ControllerBase
     }
 
     [HttpGet]
-
+    [MapToApiVersion("1.0")]
     public async Task<IActionResult> Get([FromQuery] ProductQueryDto dto)
     {
         return Ok(await _mediator.Send(new GetProductsQuery(dto)));
+    }
+
+    [HttpGet]
+    [MapToApiVersion("2.0")]
+    public IActionResult GetV2()
+    {
+        return Ok(new
+        {
+            message = "Product API V2"
+        });
     }
 }

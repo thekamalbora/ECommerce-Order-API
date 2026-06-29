@@ -15,6 +15,7 @@ using OpenTelemetry.Trace;
 using RabbitMQ.Client;
 using Serilog;
 using StackExchange.Redis;
+using Asp.Versioning;
 
 // Configure the global static Serilog logger instance
 Log.Logger = new LoggerConfiguration()
@@ -176,6 +177,21 @@ builder.Services.AddRateLimiter(options =>
         }, cancellationToken);
     };
 });
+
+// Register API Versioning services in the Dependency Injection container
+builder.Services.AddApiVersioning(options =>
+{
+    // Set the default API version to 1.0
+    options.DefaultApiVersion = new ApiVersion(1, 0);
+
+    // Automatically route to the default version (1.0) if the client omits the version in their request
+    options.AssumeDefaultVersionWhenUnspecified = true;
+
+    // Append version metadata to outbound HTTP response headers (e.g., api-supported-versions)
+    options.ReportApiVersions = true;
+})
+// Enable integration with MVC controllers and endpoints
+.AddMvc();
 
 builder.Services.AddAuthorization();
 var app = builder.Build();
