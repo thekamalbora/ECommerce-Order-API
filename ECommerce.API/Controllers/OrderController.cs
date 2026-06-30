@@ -1,29 +1,29 @@
-﻿using ECommerce.API.Services;
+﻿using ECommerce.API.Features.Orders.Commands;
+using MediatR;
 using Microsoft.AspNetCore.Mvc;
-[Route("api/orders")]
-[ApiController]
 
-public class OrderController : Controller
+namespace ECommerce.API.Controllers;
+
+[ApiController]
+[Route("api/orders")]
+public class OrderController : ControllerBase
 {
-    private readonly IOrderService _service;
-    private readonly ILogger<OrderController> _logger;
-    public OrderController(IOrderService service, ILogger<OrderController> logger)
+    private readonly IMediator _mediator;
+
+    public OrderController(IMediator mediator)
     {
-        _service = service;
-        _logger = logger;
+        _mediator = mediator;
     }
 
     [HttpPost]
-
-    public async Task<IActionResult> Create(CreateOrderDto dto)
+    public async Task<IActionResult> Create(CreateOrderCommand command)
     {
-        _logger.LogInformation("Order API called for User {UserId}", dto.UserId);
-        await _service.PlaceOrder(dto);
-        return Ok(
-        new
+        var orderId = await _mediator.Send(command);
+
+        return Ok(new
         {
-            message = "Order Created"
+            Success = true,
+            OrderId = orderId
         });
     }
 }
-

@@ -1,6 +1,9 @@
 ﻿using FluentValidation;
+using ECommerce.API.Features.Orders.Commands;
 
-public class CreateOrderValidator : AbstractValidator<CreateOrderDto>
+namespace ECommerce.API.Features.Orders.Validators;
+
+public class CreateOrderValidator : AbstractValidator<CreateOrderCommand>
 {
     public CreateOrderValidator()
     {
@@ -9,5 +12,14 @@ public class CreateOrderValidator : AbstractValidator<CreateOrderDto>
 
         RuleFor(x => x.Items)
             .NotEmpty();
+
+        RuleForEach(x => x.Items).ChildRules(item =>
+        {
+            item.RuleFor(x => x.ProductId)
+                .GreaterThan(0);
+
+            item.RuleFor(x => x.Quantity)
+                .GreaterThan(0);
+        });
     }
 }

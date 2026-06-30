@@ -1,8 +1,10 @@
-﻿using ECommerce.API.Data;
+﻿using ECommerce.API.Behaviors;
+using ECommerce.API.Data;
 using ECommerce.API.Helpers;
 using ECommerce.API.Messaging;
 using ECommerce.API.Repositories;
 using ECommerce.API.Services;
+using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -47,6 +49,20 @@ public static class DependencyInjectionExtensions
         // Register MediatR Handlers from the main executing Assembly
         services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(Program).Assembly));
 
+        // Register MediatR Pipeline Behaviors (Transient lifetime)
+        services.AddTransient(typeof(IPipelineBehavior<,>),typeof(LoggingBehavior<,>));
+
+        // Register MediatR Pipeline Behaviors (Transient lifetime)
+        services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
+
+        // Register MediatR Pipeline Behaviors (Transient lifetime)
+        services.AddTransient(typeof(IPipelineBehavior<,>), typeof(PerformanceBehavior<,>));
+
+        // Register MediatR Pipeline Behaviors (Transient lifetime)
+        services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ExceptionBehavior<,>));
+        //services.AddTransient(typeof(IPipelineBehavior<,>), typeof(TransactionBehavior<,>));
+        
+        
         // Register HttpContext Accessor to read request context inside services
         services.AddHttpContextAccessor();
 
