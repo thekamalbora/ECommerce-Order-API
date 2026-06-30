@@ -1,5 +1,4 @@
 ﻿using ECommerce.API.Middleware;
-using Microsoft.AspNetCore.Builder;
 using Serilog;
 
 namespace ECommerce.API.Extensions;
@@ -8,34 +7,32 @@ public static class MiddlewareExtensions
 {
     public static void UseCustomMiddlewares(this WebApplication app)
     {
-        // Global error handling block to intercept exceptions and return clean API responses
+        // Global exception handling
         app.UseMiddleware<ExceptionMiddleware>();
 
-        // Ensure that POST requests with the same Idempotency-Key are processed only once
-        app.UseMiddleware<IdempotencyMiddleware>();
-
-        // Compress outgoing responses to optimize bandwidth usage
-        app.UseResponseCompression();
-
-        // Apply traffic rate limiting rules to protect endpoints against spam
-        app.UseRateLimiter();
-
-        // Enable Serilog's smart request logging to capture HTTP telemetry data efficiently
+        // Log complete request lifecycle
         app.UseSerilogRequestLogging();
 
-        // Automatically redirect insecure HTTP requests over to secure HTTPS
+        // Redirect HTTP → HTTPS early
         app.UseHttpsRedirection();
 
-        // Attach unique correlation identifiers to track entire lifecycle of requests
+        // Prevent abuse before expensive processing
+        app.UseRateLimiter();
+
+        // Attach Trace / Correlation Id
         app.UseMiddleware<CorrelationIdMiddleware>();
 
-        // Process HTTP cache validation headers using custom Entity Tag logic
+        // Prevent duplicate POST execution
+        app.UseMiddleware<IdempotencyMiddleware>();
+
+        // Conditional response caching
         app.UseMiddleware<ETagMiddleware>();
 
-        // Verify who the requesting user identity is before checking access rules
-        app.UseAuthentication();
+        // Compress final response body
+        app.UseResponseCompression();
 
-        // Enforce role or policy access control permissions on endpoint resources
+        // Security
+        app.UseAuthentication();
         app.UseAuthorization();
     }
 }

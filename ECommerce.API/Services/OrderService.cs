@@ -1,9 +1,10 @@
-﻿using ECommerce.API.Data;
+﻿using System.Diagnostics;
+using ECommerce.API.Data;
 using ECommerce.API.Entities;
 using ECommerce.API.Messaging;
 using ECommerce.API.Services;
+using Hangfire;
 using Microsoft.EntityFrameworkCore;
-using System.Diagnostics;
 
 
 public class OrderService : IOrderService
@@ -90,6 +91,8 @@ public class OrderService : IOrderService
             _logger.LogInformation("Order created successfully. OrderId: {OrderId}", order.Id);
             activity.SetTag("order.total", total);
             await tx.CommitAsync();
+            // Background processing
+            BackgroundJob.Enqueue<EmailNotificationJob>(x => x.SendOrderEmail(order.Id));
 
             //await _pub.Publish($"Order Created:{order.Id}");
         }

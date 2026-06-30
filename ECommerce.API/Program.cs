@@ -40,6 +40,9 @@ builder.Services.AddRateLimits();
 // Register heartbeats monitors for checking external dependent resources states
 builder.Services.AddHealth(builder.Configuration);
 
+// Register Hangfire background job processing engine and dashboard UI
+builder.Services.AddHangfireSetup(builder.Configuration);
+
 var app = builder.Build();
 
 // Intercept incoming connection pipelines with customized sequence interceptors
@@ -54,6 +57,8 @@ if (app.Environment.IsDevelopment())
 // Map endpoints bound directly onto controller implementation classes
 app.MapControllers();
 
+// Map background job processing dashboard UI onto a specific route
+app.UseHangfireSetup();
 // Open target vital monitoring endpoints reporting individual server elements metrics
 app.MapCustomHealth();
 

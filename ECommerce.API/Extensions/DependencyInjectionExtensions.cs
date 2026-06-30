@@ -29,7 +29,8 @@ public static class DependencyInjectionExtensions
         services.AddScoped<IProductService, ProductService>();
         services.AddScoped<IOrderService, OrderService>();
         services.AddScoped<ICacheService, CacheService>();
-
+        services.AddScoped<IEmailService, EmailService>();
+        services.AddScoped<EmailNotificationJob>();
         // Register RabbitMQ Event Publisher (Singleton lifetime)
         services.AddSingleton<IRabbitMqPublisher, RabbitMqPublisher>();
 
