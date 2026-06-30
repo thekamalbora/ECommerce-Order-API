@@ -43,6 +43,9 @@ builder.Services.AddHealth(builder.Configuration);
 // Register Hangfire background job processing engine and dashboard UI
 builder.Services.AddHangfireSetup(builder.Configuration);
 
+//  Register Polly resilience and transient fault handling policies for HTTP clients
+builder.Services.AddPollySetup();
+
 var app = builder.Build();
 
 // Intercept incoming connection pipelines with customized sequence interceptors

@@ -18,7 +18,7 @@ public class OrderConsumer : BackgroundService
 
                 await channel.QueueDeclareAsync(
                     queue: "order-created",
-                    durable: false,
+                    durable: true,
                     exclusive: false,
                     autoDelete: false);
 

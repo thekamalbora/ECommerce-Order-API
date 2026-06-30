@@ -2,25 +2,24 @@
 
 public class EmailService : IEmailService
 {
-    private readonly ILogger<EmailService> _logger;
+    private readonly IHttpClientFactory _http;
 
-    public EmailService(ILogger<EmailService> logger)
+    public EmailService(IHttpClientFactory http)
     {
-        _logger = logger;
+        _http = http;
     }
 
     public async Task Send(string to, string subject, string body)
     {
-        // Simulate SMTP network delay
-        await Task.Delay(3000);
+        var client = _http.CreateClient("EmailClient");
 
-        _logger.LogInformation(
-            """
-            EMAIL SENT
-            TO: {To}
-            SUBJECT: {Subject}
-            BODY: {Body}
-            """,
-            to, subject, body);
+        // Simulating external email provider call with status 503 to trigger Polly policy
+        //var response = await client.GetAsync("https://httpstat.us/503");
+        // Simulating external email provider call with status 200 to test successful email sending
+        var response = await client.GetAsync("https://www.google.com");
+    
+        response.EnsureSuccessStatusCode();
+
+        Console.WriteLine("EMAIL SENT");
     }
 }
