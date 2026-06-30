@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Builder;
+﻿using ECommerce.API.Middleware;
+using Microsoft.AspNetCore.Builder;
 using Serilog;
 
 namespace ECommerce.API.Extensions;
@@ -9,6 +10,9 @@ public static class MiddlewareExtensions
     {
         // Global error handling block to intercept exceptions and return clean API responses
         app.UseMiddleware<ExceptionMiddleware>();
+
+        // Ensure that POST requests with the same Idempotency-Key are processed only once
+        app.UseMiddleware<IdempotencyMiddleware>();
 
         // Compress outgoing responses to optimize bandwidth usage
         app.UseResponseCompression();
